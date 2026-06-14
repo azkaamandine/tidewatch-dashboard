@@ -107,7 +107,7 @@ with st.sidebar:
         .control-header { font-family: 'Orbitron', sans-serif; color: #ffffff; font-size: 1.1rem; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
         </style>
         <div class="sidebar-title-container">
-            <div style='font-size: 60px; text-shadow: 0 0 20px #00CFD5; margin-bottom: 10px;'>⚓</div>
+            <div style='font-size: 55px; text-shadow: 0 0 20px #00CFD5; margin-bottom: 10px;'>⚓</div>
             <div class="sidebar-main-title">NAVIWATCH</div>
             <div class="sidebar-subtitle">Pusat Komando Navigasi</div>
         </div>
