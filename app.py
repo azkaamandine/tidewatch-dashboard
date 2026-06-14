@@ -245,7 +245,7 @@ with harian_col2:
 
     fig_harian.update_layout(
         height=350, margin=dict(l=0, r=0, t=10, b=0), plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-        title=dict(text="🌊 GRAFIK ELEVASI MUKA AIR AKTUAL (PASUT + GELOMBANG)", font=dict(color="#38bdf8", size=14)),
+        title=dict(text="🌊 GRAFIK ELEVASI MUKA AIR AKTUAL (PASUT + GELOMBANG)", font=dict(color="#38bdf8", size=10)),
         xaxis=dict(showgrid=False, tickformat="%H:%M", tickfont=dict(color="#a0b2c6")), yaxis=dict(gridcolor="#1e334d", tickfont=dict(color="#a0b2c6")),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
