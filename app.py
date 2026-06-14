@@ -132,7 +132,7 @@ st.markdown("""
     <div class="title-container">
         <div class="glow-text">TIDEWATCH</div>
         <div class="sub-glow">Java Maritime Network</div>
-        <div class="cyber-caption">Sistem Pendukung Keputusan Keselamatan Navigasi Terintegrasi Pasut & Vektor Angin</div>
+        <div class="cyber-caption">Sistem Pendukung Keputusan Keselamatan Navigasi Pelabuhan Terintegrasi Pasut, Gelombang & Vektor Angin</div>
     </div>
 """, unsafe_allow_html=True)
 
