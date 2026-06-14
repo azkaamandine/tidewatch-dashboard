@@ -294,7 +294,7 @@ with row2_col1:
     fig_depth.add_trace(go.Scatter(x=df_display['Time'], y=df_display['Total_Kedalaman'] + amp_gelombang, mode='lines', line=dict(width=0), showlegend=False))
     fig_depth.add_trace(go.Scatter(x=df_display['Time'], y=df_display['Total_Kedalaman'] - amp_gelombang, mode='lines', line=dict(width=0), fill='tonexty', fillcolor='rgba(255, 255, 255, 0.1)', name='Wave Envelope'))
     fig_depth.add_trace(go.Scatter(x=df_display['Time'], y=df_display['Total_Kedalaman'], mode='lines', name='Kedalaman Pasut', line=dict(color='#00CFD5', width=3)))
-    fig_depth.add_hline(y=ambang_keamanan, line_dash="dash", line_color="#f85149", annotation_text="Batas Draft + UKC")
+    fig_depth.add_hline(y=ambang_keamanan, line_dash="dash", line_color="#f85149", annotation_text="Batas Aman Kapal")
     fig_depth.update_layout(xaxis_title="Waktu", yaxis_title="Kedalaman (m)", height=450, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font=dict(color="#a0b2c6"), xaxis=dict(gridcolor="#1f364d"), yaxis=dict(gridcolor="#1f364d"))
     st.plotly_chart(fig_depth, use_container_width=True)
 
