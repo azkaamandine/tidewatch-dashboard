@@ -101,7 +101,7 @@ with st.sidebar:
         <style>
         [data-testid="stSidebar"] { background-color: #050b14 !important; border-right: 2px solid #00CFD5; box-shadow: 5px 0px 20px rgba(0, 207, 213, 0.15); }
         .sidebar-title-container { text-align: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid rgba(0, 207, 213, 0.3); }
-        .sidebar-main-title { font-family: 'Orbitron', sans-serif; color: #00CFD5; font-size: 2rem; font-weight: 900; letter-spacing: 3px; text-shadow: 0px 0px 15px rgba(0, 207, 213, 0.6); margin-top: -10px; }
+        .sidebar-main-title { font-family: 'Orbitron', sans-serif; color: #00CFD5; font-size: 1.8rem; font-weight: 900; letter-spacing: 3px; text-shadow: 0px 0px 15px rgba(0, 207, 213, 0.6); margin-top: -10px; }
         .sidebar-subtitle { font-family: 'Rajdhani', sans-serif; color: #a0b2c6; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; }
         .control-panel-box { background: linear-gradient(145deg, #111d2e 0%, #0b141a 100%); border: 1px solid #1f364d; border-left: 4px solid #38bdf8; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
         .control-header { font-family: 'Orbitron', sans-serif; color: #ffffff; font-size: 1.1rem; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
