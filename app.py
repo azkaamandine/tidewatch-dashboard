@@ -7,7 +7,7 @@ import requests
 from datetime import datetime, timedelta
 
 # 1. Konfigurasi Halaman
-st.set_page_config(page_title="TideWatch - Java Maritime Network", page_icon="⚓", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="NaviWatch - Java Maritime Network", page_icon="⚓", layout="wide", initial_sidebar_state="expanded")
 
 # --- CSS HACK UNTUK TEMA DASHBOARD FUTURISTIK ---
 st.markdown("""
@@ -108,7 +108,7 @@ with st.sidebar:
         </style>
         <div class="sidebar-title-container">
             <div style='font-size: 60px; text-shadow: 0 0 20px #00CFD5; margin-bottom: 10px;'>⚓</div>
-            <div class="sidebar-main-title">TIDEWATCH</div>
+            <div class="sidebar-main-title">NAVIWATCH</div>
             <div class="sidebar-subtitle">Pusat Komando Navigasi</div>
         </div>
         <div class="control-panel-box">
@@ -130,7 +130,7 @@ st.markdown("""
     .cyber-caption { font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; color: #a0b2c6; letter-spacing: 2px; border-left: 5px solid #00CFD5; padding-left: 15px; text-transform: uppercase; background: linear-gradient(to right, rgba(0, 207, 213, 0.15), transparent); padding-top: 6px; padding-bottom: 6px; display: inline-block; }
     </style>
     <div class="title-container">
-        <div class="glow-text">TIDEWATCH</div>
+        <div class="glow-text">NAVIWATCH</div>
         <div class="sub-glow">Java Maritime Network</div>
         <div class="cyber-caption">Sistem Pendukung Keputusan Keselamatan Navigasi Pelabuhan Terintegrasi Pasut, Gelombang & Vektor Angin</div>
     </div>
