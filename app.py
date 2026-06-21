@@ -16,7 +16,7 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@700;900&display=swap');
 .stApp { background-color: #0A1118; font-family: 'Inter', sans-serif; color: #FFFFFF; }
 
-/* FIX SIDEBAR TOGGLE: Hide main menu and footer, but KEEP header visible for the toggle button */
+/* FIX SIDEBAR TOGGLE: Sembunyikan menu dan footer, tapi biarkan header untuk tombol toggle */
 #MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
 .block-container { padding-top: 1rem !important; padding-bottom: 1rem !important; max-width: 100% !important; }
@@ -88,19 +88,16 @@ if 'lokasi_pilihan' not in st.session_state:
 @st.cache_data(ttl=1800)
 def fetch_marine_forecast(lat, lon):
     try:
-        # API 1: Gelombang
         url_wave = f"https://marine-api.open-meteo.com/v1/marine?latitude={lat}&longitude={lon}&hourly=wave_height,wave_period&timezone=auto&forecast_days=2"
         r_wave = requests.get(url_wave, timeout=10).json()
         df_wave = pd.DataFrame(r_wave['hourly'])
         df_wave['time'] = pd.to_datetime(df_wave['time'])
         
-        # API 2: Angin
         url_wind = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kn&timezone=auto&forecast_days=2"
         r_wind = requests.get(url_wind, timeout=10).json()
         df_wind = pd.DataFrame(r_wind['hourly'])
         df_wind['time'] = pd.to_datetime(df_wind['time'])
         
-        # Ekstrak Data KPI (Current)
         max_hs = df_wave['wave_height'].iloc[0]
         avg_period = df_wave['wave_period'].mean()
         
@@ -117,7 +114,6 @@ def fetch_marine_forecast(lat, lon):
             'hourly_wind': df_wind
         }
     except Exception as e:
-        # Fallback jika API down
         return {'success': False, 'error': str(e)}
 
 @st.cache_data
@@ -129,7 +125,6 @@ def generate_tmd_prediction(target_date, days_duration, lokasi):
     t_hours = (time_series - datetime(2025, 1, 1)).total_seconds() / 3600.0
     y_pred = np.zeros(len(t_hours))
     
-    # Amplitudo Komponen
     y_pred += data['M2'] * np.cos((2 * np.pi / 12.42) * t_hours - 0.5)
     y_pred += data['S2'] * np.cos((2 * np.pi / 12.00) * t_hours - 1.0)
     y_pred += data['K1'] * np.cos((2 * np.pi / 23.93) * t_hours - 1.5)
@@ -137,7 +132,6 @@ def generate_tmd_prediction(target_date, days_duration, lokasi):
     y_pred += data['msl'] 
     
     df = pd.DataFrame({'Time': time_series, 'Prediksi_Pasut': y_pred})
-    # Deteksi Puncak & Lembah
     df['is_pasang'] = (df['Prediksi_Pasut'] > df['Prediksi_Pasut'].shift(1)) & (df['Prediksi_Pasut'] > df['Prediksi_Pasut'].shift(-1))
     df['is_surut'] = (df['Prediksi_Pasut'] < df['Prediksi_Pasut'].shift(1)) & (df['Prediksi_Pasut'] < df['Prediksi_Pasut'].shift(-1))
     return df
@@ -152,7 +146,6 @@ def get_beaufort_scale(knots):
     elif knots <= 27: return "Strong Breeze"
     else: return "Gale/Storm"
 
-# Helper untuk konversi DataFrame ke CSV (REQ 3)
 def convert_df_to_csv(df):
     return df.to_csv(index=False).encode('utf-8')
 
@@ -173,17 +166,13 @@ with st.sidebar:
     st.markdown("<hr style='border-color:#1E2D3D;'>", unsafe_allow_html=True)
     st.markdown("<h4 style='color:#00E5FF; font-size:12px; letter-spacing:1px;'>⚙️ PUSAT KENDALI OPERASIONAL</h4>", unsafe_allow_html=True)
     
-    # Deteksi perubahan lokasi untuk REQ 2 (Parameter Dinamis)
     lokasi_index = list(STASIUN_DB.keys()).index(st.session_state.lokasi_pilihan)
     
-    # Simpan lokasi lama untuk mendeteksi perubahan
     if 'lokasi_lama' not in st.session_state: st.session_state.lokasi_lama = st.session_state.lokasi_pilihan
-
     lokasi_dipilih_sidebar = st.selectbox("Pilih Stasiun Pelabuhan:", list(STASIUN_DB.keys()), index=lokasi_index)
     
     if lokasi_dipilih_sidebar != st.session_state.lokasi_pilihan:
         st.session_state.lokasi_pilihan = lokasi_dipilih_sidebar
-        # Jangan rerun di sini, biar logika dinamis di bawah berjalan dulu
     
     tanggal_pilihan = st.date_input("Tanggal Analisis Batas:", datetime(2025, 1, 15))
     mode_tampilan = st.radio("Rentang Prediksi Grafik:", ["Harian (24 Jam)", "Bulanan (30 Hari)"])
@@ -200,7 +189,6 @@ forecast_data = fetch_marine_forecast(data_stasiun['lat'], data_stasiun['lon'])
 
 if not forecast_data['success']:
     st.error(f"⚠️ Gagal menghubungkan ke Open-Meteo API. Menggunakan data fallback statis. Error: {forecast_data.get('error', 'Unknown Error')}")
-    # Fallback Data
     max_wave_hs, avg_wave_period = 0.62, 6.5
     current_wind_speed, current_wind_dir, current_wind_gust = 15.6, 230.0, 22.4
     df_hourly_wave, df_hourly_wind = pd.DataFrame(), pd.DataFrame()
@@ -220,30 +208,24 @@ df_display['Total_Kedalaman'] = batimetri_alur + df_display['Prediksi_Pasut']
 F_index = (data_stasiun['K1'] + data_stasiun['O1']) / (data_stasiun['M2'] + data_stasiun['S2'])
 tipe_pasut = "Harian Ganda" if F_index <= 0.25 else "Campuran Ganda" if F_index <= 1.5 else "Campuran Tunggal" if F_index <= 3.0 else "Harian Tunggal"
 
-
 # ==========================================
-# 5. LOGIKA DYNAMIC DEFAULT PARAMETER KAPAL (REQ 2)
+# 5. LOGIKA DYNAMIC DEFAULT PARAMETER KAPAL
 # ==========================================
-# Jika lokasi berubah, sesuaikan draf default
 if st.session_state.lokasi_pilihan != st.session_state.lokasi_lama:
-    # Set default draf: Batimetri - 1.5m, maks 8.5m, min 1m
     default_draft_baru = max(1.0, min(8.5, batimetri_alur - 1.5))
     st.session_state.last_draft = default_draft_baru
-    st.session_state.last_ukc = 1.0 # default UKC tetap 1m
-    # Update lokasi lama agar logika ini tidak jalan terus
+    st.session_state.last_ukc = 1.0
     st.session_state.lokasi_lama = st.session_state.lokasi_pilihan
     st.rerun()
 
-# Cek apakah session state untuk draf sudah ada, jika belum set default Priok
 if 'last_draft' not in st.session_state:
     bat_priok = STASIUN_DB[list(STASIUN_DB.keys())[0]]['alur']
     st.session_state.last_draft = max(1.0, min(8.5, bat_priok - 1.5))
 if 'last_ukc' not in st.session_state:
     st.session_state.last_ukc = 1.0
 
-
 # ==========================================
-# 6. HEADER UTAMA TAMPILAN
+# 6. HEADER UTAMA DASHBOARD
 # ==========================================
 waktu_sekarang = datetime.utcnow() + timedelta(hours=7)
 st.markdown(f"""
@@ -309,39 +291,32 @@ if menu_aktif == "🏠 Dashboard Utama":
     with mid_left:
         st.markdown('<div class="pro-card-header">🗺️ Peta Monitoring Jalur Satelit</div>', unsafe_allow_html=True)
         df_map = pd.DataFrame([{'Lokasi': k, 'Lat': v['lat'], 'Lon': v['lon']} for k, v in STASIUN_DB.items()])
-        # Sertakan ID (Key) sebagai custom data agar bisa dibaca saat diklik
         df_map['Key'] = df_map['Lokasi']
-        # Title case & Ukuran font 9 penyesuaian permintaan user
         df_map['Nama_Peta'] = df_map['Lokasi'].apply(lambda x: x.split(',')[0].strip().title())
         df_map['Status'] = df_map['Lokasi'].apply(lambda x: 'Aktif Terpilih' if x == lokasi else 'Stasiun Lain')
         
         fig_map = px.scatter_mapbox(
-            df_map, lat="Lat", lon="Lon", text="Nama_Peta", color="Status", custom_data=["Key"], # SUNTIKAN ID
+            df_map, lat="Lat", lon="Lon", text="Nama_Peta", color="Status", custom_data=["Key"],
             color_discrete_map={'Aktif Terpilih': '#00E5FF', 'Stasiun Lain': '#FFFFFF'},
             zoom=5.4, center={"lat": data_stasiun['lat'], "lon": data_stasiun['lon']}
         )
         fig_map.update_traces(mode='markers+text', textposition='top center', textfont=dict(size=10, color='white', family='Inter'), marker=dict(size=14))
         fig_map.update_layout(mapbox_style="white-bg", mapbox_layers=[{"below": 'traces', "sourcetype": "raster", "source": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"]}], height=340, margin={"r":0,"t":0,"l":0,"b":0}, paper_bgcolor='rgba(0,0,0,0)', showlegend=False)
         
-        # >> FIX REVISI << Aktifkan on_select="rerun" dan selection_mode=["points"]
         map_selection = st.plotly_chart(
             fig_map, 
             use_container_width=True, 
-            on_select="rerun", # Mandate rerun on selection
-            selection_mode=["points"], # Specifically register clicks on points
+            on_select="rerun", 
+            selection_mode=["points"], 
             config={'displayModeBar': False}
         )
         
-        # LOGIKA PROSES KLIK PETA
         if map_selection and "selection" in map_selection:
             points = map_selection["selection"]["points"]
             if len(points) > 0:
-                # custom_data adalah array [Key]. Ambil index 0
                 klik_lokasi = points[0]["customdata"][0]
-                # Jika lokasi yang diklik berbeda dengan yang aktif, update session state
                 if klik_lokasi != st.session_state.lokasi_pilihan:
                     st.session_state.lokasi_pilihan = klik_lokasi
-                    # Paksa aplikasi untuk memuat ulang dengan lokasi baru
                     st.rerun()
 
     with mid_right:
@@ -361,15 +336,13 @@ if menu_aktif == "🏠 Dashboard Utama":
         <div style="text-align:center;"><div style="font-size:10px; color:#94A3B8;">Kedalaman Alur</div><div style="font-size:14px; color:#00E5FF; font-weight:700;">{batimetri_alur:.1f} m</div></div>
         </div>""", unsafe_allow_html=True)
 
-    # --- BARIS 3: INPUT KAPAL (Dinamis REQ 2) & STATUS KESELAMATAN ---
+    # --- BARIS 3: INPUT KAPAL & STATUS KESELAMATAN ---
     st.markdown("<hr style='border-color:#1E2D3D; margin-top:20px; margin-bottom:20px;'>", unsafe_allow_html=True)
     
     col_input1, col_input2, col_status = st.columns([1, 1, 2])
     with col_input1:
         st.markdown('<div class="pro-card-header">🚢 Parameter Draft Kapal (m)</div>', unsafe_allow_html=True)
-        # Widget Input dikaitkan ke session state untuk REQ 2
         draft_kapal_dash = st.number_input("Draft Kapal", 1.0, 20.0, value=st.session_state.last_draft, step=0.5, label_visibility="collapsed")
-        # Simpan perubahan manual pengguna
         st.session_state.last_draft = draft_kapal_dash
         
     with col_input2:
@@ -405,7 +378,8 @@ if menu_aktif == "🏠 Dashboard Utama":
     bot1, bot2 = st.columns([1.8, 1])
     
     with bot1:
-        st.markdown('<div class="pro-card-header">📉 Simulasi Ruang Kedalaman Aktual (Batimetri + Pasut)</div>', unsafe_allow_html=True)
+        # >> FIX REVISI: Tambahkan margin-top agar tidak mepet <<
+        st.markdown('<div class="pro-card-header" style="margin-top: 25px;">📉 Simulasi Ruang Kedalaman Aktual (Batimetri + Pasut)</div>', unsafe_allow_html=True)
         fig_depth = go.Figure()
         fig_depth.add_trace(go.Scatter(x=df_display['Time'], y=df_display['Total_Kedalaman'] + amp_gelombang, mode='lines', line=dict(width=0), showlegend=False, hoverinfo='skip'))
         fig_depth.add_trace(go.Scatter(x=df_display['Time'], y=df_display['Total_Kedalaman'] - amp_gelombang, mode='lines', line=dict(width=0), fill='tonexty', fillcolor='rgba(0, 229, 255, 0.05)', name='Wave Envelope'))
@@ -415,17 +389,17 @@ if menu_aktif == "🏠 Dashboard Utama":
         st.plotly_chart(fig_depth, use_container_width=True, config={'displayModeBar': False})
 
     with bot2:
-        st.markdown('<div class="pro-card-header">🌀 Radar Integrasi Embusan Vektor Angin</div>', unsafe_allow_html=True)
+        # >> FIX REVISI: Tambahkan margin-top agar tidak mepet <<
+        st.markdown('<div class="pro-card-header" style="margin-top: 25px;">🌀 Radar Integrasi Embusan Vektor Angin</div>', unsafe_allow_html=True)
         fig_radar = go.Figure()
         fig_radar.add_trace(go.Barpolar(r=[current_wind_speed], theta=[current_wind_dir], width=[15], marker_color='#00E5FF', opacity=0.8))
         fig_radar.update_layout(height=260, margin=dict(l=15, r=15, t=15, b=15), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', polar=dict(radialaxis=dict(visible=True, gridcolor='#1E2D3D', tickfont=dict(color='#64748B', size=8)), angularaxis=dict(direction="clockwise", rotation=90, gridcolor='#1E2D3D', tickfont=dict(color='#94A3B8', size=9))), showlegend=False)
         st.plotly_chart(fig_radar, use_container_width=True, config={'displayModeBar': False})
 
-    # --- BARIS 5: JENDELA WAKTU AMAN NAVIGASI & EKSPOR (REQ 3) ---
+    # --- BARIS 5: JENDELA WAKTU AMAN NAVIGASI & EKSPOR ---
     st.markdown('<div class="pro-card-header" style="margin-top:20px;">🕒 Jendela Waktu Aman Navigasi Alur Pelabuhan</div>', unsafe_allow_html=True)
     df_display['is_safe'] = (df_display['Total_Kedalaman'] - amp_gelombang) >= ambang_keamanan_dash
     
-    # Generate Jadwal Terbuka
     df_display['block'] = (df_display['is_safe'] != df_display['is_safe'].shift(1)).cumsum()
     df_safewin = df_display[df_display['is_safe']].copy()
     
@@ -441,7 +415,6 @@ if menu_aktif == "🏠 Dashboard Utama":
                 jadwal_list.append({"Buka_Alur_WIB": waktu_mulai.strftime("%Y-%m-%d %H:%M"), "Tutup_Alur_WIB": waktu_selesai.strftime("%Y-%m-%d %H:%M"), "Durasi_Jam": round(durasi, 1)})
         jadwal_data_df = pd.DataFrame(jadwal_list)
 
-    # LOGIKA PERINGATAN BUKAN ST.SUCCESS
     if current_wind_speed > 20.0:
         st.markdown(f'<div class="custom-alert-danger"><span style="font-size:24px;">🚫</span><span style="font-size:13px;"><b>JENDELA NAVIGASI DITUTUP TOTAL:</b> Kecepatan angin lateral ({current_wind_speed:.1f} kt) sangat berisiko untuk proses manuver lambung kapal.</span></div>', unsafe_allow_html=True)
     elif max_wave_hs > 1.5:
@@ -451,23 +424,18 @@ if menu_aktif == "🏠 Dashboard Utama":
     elif not df_display['is_safe'].any():
         st.markdown('<div class="custom-alert-danger"><span style="font-size:24px;">🚫</span><span style="font-size:13px;"><b>Alur Ditutup Total:</b> Ruang bebas kedalaman alur tidak mencukupi rasio standar keamanan *Under Keel Clearance* (UKC) sepanjang rentang waktu proyeksi.</span></div>', unsafe_allow_html=True)
     else:
-        # Tampilkan tabel jika ada jendela
         if not jadwal_data_df.empty:
-            # TOMBOL EKSPOR (REQ 3)
             col_tbl1, col_tbl2 = st.columns([2, 1])
             with col_tbl1:
-                # Tampilkan versi user-friendly
                 tbl_display = jadwal_data_df.copy()
                 tbl_display.columns = ["Buka Alur (WIB)", "Tutup Alur (WIB)", "Durasi Aman (Jam)"]
                 st.table(tbl_display)
             with col_tbl2:
-                # Tombol Download di pojok kanan kustom CSS
                 csv = convert_df_to_csv(jadwal_data_df)
                 filename = f"NaviWatch_Log_{lokasi.split(',')[0]}_{tanggal_pilihan.strftime('%Y%m%d')}.csv"
-                st.download_button(label="📥 Unduh Laporan Log CSV", data=csv, file_name=filename, mime='text/csv', help="Klik untuk mengunduh jadwal jendela aman dalam format CSV.")
-                
+                st.download_button(label="📥 Unduh Laporan Log CSV", data=csv, file_name=filename, mime='text/csv')
         else:
-            st.markdown('<div class="custom-alert-warning"><span style="font-size:24px;">⚠️</span><span style="font-size:13px;"><b>Jendela Waktu Sempit:</b> Bukaan aman teridentifikasi di bawah 1 jam. Standar pengamanan otoritas melarang proses manuver bersandar pada kondisi tenggat waktu terbatas.</span></div>', unsafe_allow_html=True)
+            st.markdown('<div class="custom-alert-warning"><span style="font-size:24px;">⚠️</span><span style="font-size:13px;"><b>Jendela Waktu Sempit:</b> Bukaan aman teridentifikasi di bawah 1 jam. Manuver dilarang otoritas pada jendela sempit.</span></div>', unsafe_allow_html=True)
 
 # ==========================================
 # KONTEN MENU: KOMPONEN PASUT
@@ -486,8 +454,7 @@ elif menu_aktif == "📈 Detail Komponen Pasut":
     with col_t1:
         fig_decomp = go.Figure()
         fig_decomp.add_trace(go.Scatter(x=df_display['Time'].head(144), y=df_display['Prediksi_Pasut'].head(144), line=dict(color='#00E5FF', width=3)))
-        # TAMBAHAN: Garis MSL pada grafik
-        fig_decomp.add_hline(y=data_stasiun['msl'], line_dash="dash", line_color="#94A3B8", annotation_text="Mean Sea Level (MSL)", annotation_font_color="#94A3B8")
+        fig_decomp.add_hline(y=data_stasiun['msl'], line_dash="dash", line_color="#94A3B8", annotation_text="MSL", annotation_font_color="#94A3B8")
         fig_decomp.update_layout(height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', xaxis=dict(gridcolor='#1E2D3D'), yaxis=dict(gridcolor='#1E2D3D', title="Elevasi (m)"), margin=dict(t=5, b=5, l=0, r=0))
         st.plotly_chart(fig_decomp, use_container_width=True)
         
@@ -508,17 +475,17 @@ elif menu_aktif == "📈 Detail Komponen Pasut":
         
         st.markdown(f"""
         <table class="pro-table">
-        <tr><th>Konstituen</th><th>Tipe pasut global</th><th>Amplitudo</th></tr>
-        <tr><td><b>M2</b> Bulan Semi-diurnal</td><td>TPXO Model Driver</td><td>{data_stasiun['M2']:.2f} m</td></tr>
-        <tr><td><b>S2</b> Matahari Semi-diurnal</td><td>TPXO Model Driver</td><td>{data_stasiun['S2']:.2f} m</td></tr>
-        <tr><td><b>K1</b> Soli-lunar Diurnal</td><td>TPXO Model Driver</td><td>{data_stasiun['K1']:.2f} m</td></tr>
-        <tr><td><b>O1</b> Bulan Diurnal</td><td>TPXO Model Driver</td><td>{data_stasiun['O1']:.2f} m</td></tr>
-        <tr><td><b>MSL</b> Mean Sea Level</td><td>Referensi Datum</td><td>{data_stasiun['msl']:.2f} m</td></tr>
+        <tr><th>Konstituen</th><th>Amplitudo</th></tr>
+        <tr><td><b>M2</b> Bulan Semi-diurnal</td><td>{data_stasiun['M2']:.2f} m</td></tr>
+        <tr><td><b>S2</b> Matahari Semi-diurnal</td><td>{data_stasiun['S2']:.2f} m</td></tr>
+        <tr><td><b>K1</b> Soli-lunar Diurnal</td><td>{data_stasiun['K1']:.2f} m</td></tr>
+        <tr><td><b>O1</b> Bulan Diurnal</td><td>{data_stasiun['O1']:.2f} m</td></tr>
+        <tr><td><b>MSL</b> Mean Sea Level</td><td>{data_stasiun['msl']:.2f} m</td></tr>
         </table>
         """, unsafe_allow_html=True)
 
 # ==========================================
-# KONTEN MENU: GELOMBANG LAUT (REQ 1: NO DUMMY TRENDS)
+# KONTEN MENU: GELOMBANG LAUT
 # ==========================================
 elif menu_aktif == "🌊 Karakteristik Gelombang":
     st.markdown('<div class="pro-card-header">🌊 Analisis Spektrum & Prediksi Tren Gelombang 48 Jam</div>', unsafe_allow_html=True)
@@ -527,8 +494,8 @@ elif menu_aktif == "🌊 Karakteristik Gelombang":
         st.warning("Data tren gelombang tidak tersedia saat ini.")
     else:
         col_w1, col_w2, col_w3 = st.columns(3)
-        h_max = max_wave_hs * 1.86 # Pendekatan Teoretis Rayleigh Distribution
-        wave_energy = 0.125 * 1025 * 9.81 * (max_wave_hs**2) # E = 1/8 rho g H^2 (Joule/m^2)
+        h_max = max_wave_hs * 1.86 
+        wave_energy = 0.125 * 1025 * 9.81 * (max_wave_hs**2) 
         
         with col_w1:
             st.markdown(f"""<div class="pro-card"><div class="kpi-title">SIGNIFICANT WAVE (Hs) Aktual</div><div class="kpi-val" style="color:#00E5FF;">{max_wave_hs:.2f} m</div><div class="nav-sub">Rata-rata 1/3 gelombang tertinggi.</div></div>""", unsafe_allow_html=True)
@@ -539,7 +506,6 @@ elif menu_aktif == "🌊 Karakteristik Gelombang":
 
         col_w_chart, col_w_text = st.columns([2.2, 1])
         with col_w_chart:
-            # GRAFIK TREN REAL API (REQ 1)
             fig_wave = go.Figure()
             fig_wave.add_trace(go.Scatter(x=df_hourly_wave['time'], y=df_hourly_wave['wave_height'], fill='tozeroy', fillcolor='rgba(0, 229, 255, 0.15)', line=dict(color='#00E5FF', width=2), name="Tinggi Hs (m)"))
             fig_wave.add_hline(y=1.5, line_dash="dash", line_color="#f85149", annotation_text="Batas Bahaya (1.5m)", annotation_font_color="#f85149")
@@ -557,7 +523,7 @@ elif menu_aktif == "🌊 Karakteristik Gelombang":
             """, unsafe_allow_html=True)
 
 # ==========================================
-# KONTEN MENU: VEKTOR ANGIN (REAL TRENDS)
+# KONTEN MENU: VEKTOR ANGIN
 # ==========================================
 elif menu_aktif == "💨 Analisis Vektor Angin":
     st.markdown('<div class="pro-card-header">💨 Dinamika Angin Permukaan Lapisan Batas Atmosfer (48 Jam)</div>', unsafe_allow_html=True)
@@ -577,7 +543,6 @@ elif menu_aktif == "💨 Analisis Vektor Angin":
 
         col_a_chart, col_a_text = st.columns([2.2, 1])
         with col_a_chart:
-            # GRAFIK TREN REAL API (REQ 1)
             fig_wind_trend = go.Figure()
             fig_wind_trend.add_trace(go.Bar(x=df_hourly_wind['time'], y=df_hourly_wind['wind_speed_10m'], name="Kecepatan Rata-Rata (kt)", marker_color='#00E5FF', opacity=0.7))
             fig_wind_trend.add_trace(go.Scatter(x=df_hourly_wind['time'], y=df_hourly_wind['wind_gusts_10m'], mode='lines', name="Wind Gust (kt)", line=dict(color='#FFB020', width=1.5)))
