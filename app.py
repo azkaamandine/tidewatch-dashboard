@@ -9,52 +9,55 @@ from datetime import datetime, timedelta
 # 1. Konfigurasi Halaman
 st.set_page_config(page_title="NaviWatch - Java Maritime Network", page_icon="⚓", layout="wide", initial_sidebar_state="expanded")
 
-# --- CSS: TEMA PROFESIONAL BIRU - PUTIH - HITAM ---
+# --- CSS: TEMA DARK TERINSPIRASI ECDIS / PETA NAVIGASI ---
+# Logika warna: gelap = laut dalam, cyan terang = "safety contour" (garis kedalaman aman
+# di peta navigasi sungguhan), jadi cyan dipakai sebagai aksen hidup yang relevan
+# secara fungsional, bukan sekadar dekorasi.
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
-
-    /* ===== Palet warna ===== */
-    /* Navy deep   #0A1A2B  -> background utama */
-    /* Navy panel  #11243A  -> kartu / sidebar   */
-    /* Navy border #1F3B57  -> garis pembatas    */
-    /* Blue accent #2D7DD2  -> data / aksen utama*/
-    /* Blue soft   #6FA8DC  -> label sekunder    */
-    /* White       #FFFFFF -> teks utama         */
-    /* Grey text   #AAB8C2 -> teks sekunder      */
-    /* Status hijau #3FA66A | Status merah #D6534A */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
     html, body, [class*="css"]  { font-family: 'Inter', sans-serif; }
-    .stApp { background-color: #0A1A2B; }
 
-    h1, h2, h3 { font-family: 'Inter', sans-serif !important; font-weight: 600 !important; color: #FFFFFF !important; letter-spacing: -0.2px; }
+    .stApp {
+        background: linear-gradient(180deg, #041018 0%, #07202F 55%, #0A2638 100%);
+        background-attachment: fixed;
+    }
+
+    /* bar tipis di atas, motif "skala kedalaman" pada peta navigasi */
+    .depth-scale-bar { height: 4px; width: 100%; margin-bottom: 22px;
+        background: linear-gradient(90deg, #041018 0%, #2DD4DA 50%, #041018 100%); border-radius: 2px; }
+
+    h1, h2, h3 { font-family: 'Inter', sans-serif !important; font-weight: 700 !important; color: #F4F8FB !important; letter-spacing: -0.2px; }
     p, span, label, div { font-family: 'Inter', sans-serif; }
 
     div[data-testid="metric-container"] {
-        background-color: #11243A;
-        border: 1px solid #1F3B57;
+        background: linear-gradient(135deg, #0E2C42 0%, #0A1F30 100%);
+        border: 1px solid #1B3A52;
+        border-top: 2px solid #2DD4DA;
         padding: 10px 12px;
-        border-radius: 6px;
+        border-radius: 8px;
+        box-shadow: 0 4px 14px rgba(2, 10, 18, 0.45);
     }
 
     div[data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] {
         font-family: 'IBM Plex Mono', monospace !important;
-        font-size: 18px !important;
+        font-size: 19px !important;
         white-space: normal !important;
         overflow: visible !important;
         text-overflow: clip !important;
         word-wrap: break-word !important;
         line-height: 1.2 !important;
-        color: #FFFFFF !important;
+        color: #F4F8FB !important;
         font-weight: 600 !important;
     }
 
-    [data-testid="stMetricLabel"] { color: #AAB8C2 !important; font-size: 12px !important; text-transform: uppercase; letter-spacing: 0.5px; }
+    [data-testid="stMetricLabel"] { color: #2DD4DA !important; font-size: 12px !important; text-transform: uppercase; letter-spacing: 0.6px; }
 
-    .status-box-aman { background-color: rgba(63, 166, 106, 0.12); border: 1px solid #3FA66A; border-radius: 6px; padding: 20px; text-align: center; color: #3FA66A; }
-    .status-box-bahaya { background-color: rgba(214, 83, 74, 0.12); border: 1px solid #D6534A; border-radius: 6px; padding: 20px; text-align: center; color: #D6534A; }
+    .status-box-aman { background: linear-gradient(135deg, rgba(52, 211, 153, 0.16), rgba(52, 211, 153, 0.05)); border: 1px solid #34D399; border-radius: 8px; padding: 20px; text-align: center; color: #34D399; box-shadow: 0 4px 14px rgba(2, 10, 18, 0.45); }
+    .status-box-bahaya { background: linear-gradient(135deg, rgba(255, 107, 91, 0.18), rgba(255, 107, 91, 0.05)); border: 1px solid #FF6B5B; border-radius: 8px; padding: 20px; text-align: center; color: #FF6B5B; box-shadow: 0 4px 14px rgba(2, 10, 18, 0.45); }
 
-    .ekstrem-box { background-color: #11243A; border: 1px solid #1F3B57; padding: 12px 14px; border-radius: 6px; margin-bottom: 10px; }
+    .ekstrem-box { background: linear-gradient(135deg, #0E2C42 0%, #0A1F30 100%); border: 1px solid #1B3A52; padding: 12px 14px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 4px 14px rgba(2, 10, 18, 0.35); }
     </style>
 """, unsafe_allow_html=True)
 
@@ -117,15 +120,15 @@ def generate_tmd_prediction(target_date, days_duration, lokasi):
 with st.sidebar:
     st.markdown("""
         <style>
-        [data-testid="stSidebar"] { background-color: #08141F !important; border-right: 1px solid #1F3B57; }
-        .sidebar-title-container { text-align: center; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 1px solid #1F3B57; }
-        .sidebar-main-title { font-family: 'Inter', sans-serif; color: #FFFFFF; font-size: 1.5rem; font-weight: 700; letter-spacing: 1px; margin-top: 6px; }
-        .sidebar-subtitle { font-family: 'IBM Plex Mono', monospace; color: #6FA8DC; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; }
-        .control-panel-box { background-color: #11243A; border: 1px solid #1F3B57; border-left: 3px solid #2D7DD2; border-radius: 6px; padding: 15px; margin-bottom: 20px; }
-        .control-header { font-family: 'Inter', sans-serif; color: #FFFFFF; font-size: 0.95rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
+        [data-testid="stSidebar"] { background: linear-gradient(180deg, #030D15 0%, #06202F 100%) !important; border-right: 1px solid #1B3A52; }
+        .sidebar-title-container { text-align: center; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 1px solid #1B3A52; }
+        .sidebar-main-title { font-family: 'Inter', sans-serif; color: #F4F8FB; font-size: 1.55rem; font-weight: 800; letter-spacing: 1px; margin-top: 8px; }
+        .sidebar-subtitle { font-family: 'IBM Plex Mono', monospace; color: #2DD4DA; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; }
+        .control-panel-box { background: linear-gradient(135deg, #0E2C42 0%, #0A1F30 100%); border: 1px solid #1B3A52; border-left: 3px solid #2DD4DA; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(2, 10, 18, 0.4); }
+        .control-header { font-family: 'Inter', sans-serif; color: #F4F8FB; font-size: 0.95rem; font-weight: 700; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
         </style>
         <div class="sidebar-title-container">
-            <div style='font-size: 38px; color: #2D7DD2;'>⚓</div>
+            <div style='font-size: 40px; color: #2DD4DA; filter: drop-shadow(0 0 8px rgba(45,212,218,0.5));'>⚓</div>
             <div class="sidebar-main-title">NAVIWATCH</div>
             <div class="sidebar-subtitle">Pusat Kendali Navigasi</div>
         </div>
@@ -139,15 +142,17 @@ with st.sidebar:
     st.markdown("---")
     st.caption("Sumber Data: TPXO Global Model & Open-Meteo Weather API")
 
+st.markdown('<div class="depth-scale-bar"></div>', unsafe_allow_html=True)
 st.markdown("""
-    <div style="border-bottom: 1px solid #1F3B57; padding-bottom: 18px; margin-bottom: 26px;">
-        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; letter-spacing: 3px; color: #6FA8DC; text-transform: uppercase; margin-bottom: 8px;">
+    <div style="border-bottom: 1px solid #1B3A52; padding-bottom: 18px; margin-bottom: 26px;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; letter-spacing: 3px; color: #2DD4DA; text-transform: uppercase; margin-bottom: 8px;">
             Sistem Pendukung Keputusan &middot; Jaringan Pelabuhan Jawa
         </div>
-        <div style="font-family: 'Inter', sans-serif; font-weight: 700; font-size: 2.6rem; color: #FFFFFF; letter-spacing: -0.5px; line-height: 1.1;">
+        <div style="font-family: 'Inter', sans-serif; font-weight: 800; font-size: 2.7rem; letter-spacing: -0.5px; line-height: 1.1;
+                    background: linear-gradient(90deg, #F4F8FB 35%, #2DD4DA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
             NaviWatch
         </div>
-        <div style="font-size: 0.95rem; color: #AAB8C2; margin-top: 6px;">
+        <div style="font-size: 0.95rem; color: #9FB3C8; margin-top: 6px;">
             Pemantauan pasut, gelombang, dan vektor angin untuk keselamatan navigasi pelabuhan secara terintegrasi.
         </div>
     </div>
@@ -163,12 +168,12 @@ with row1_col1:
 
     fig_map = px.scatter_mapbox(
         df_map, lat="Lat", lon="Lon", hover_name="Lokasi", color="Status", custom_data=["Lokasi"],
-        text="Nama_Pendek", color_discrete_map={'Terpilih': '#2D7DD2', 'Stasiun Lain': '#FFFFFF'},
+        text="Nama_Pendek", color_discrete_map={'Terpilih': '#2DD4DA', 'Stasiun Lain': '#F4F8FB'},
         zoom=5.8, center={"lat": -7.0, "lon": 110.2}, height=500
     )
     fig_map.update_traces(
         mode='markers+text', textposition='top center', textfont=dict(size=12, color='white', family='Inter'),
-        marker=dict(size=9), selector=dict(type='scattermapbox')
+        marker=dict(size=10), selector=dict(type='scattermapbox')
     )
     fig_map.update_layout(
         mapbox_style="white-bg",
@@ -177,7 +182,7 @@ with row1_col1:
             "source": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"]
         }],
         margin={"r":0,"t":0,"l":0,"b":0}, clickmode='event+select', plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        legend=dict(font=dict(color='#FFFFFF', family='Inter'))
+        legend=dict(font=dict(color='#F4F8FB', family='Inter'))
     )
     map_selection = st.plotly_chart(fig_map, width="stretch", on_select="rerun", selection_mode="points")
     if map_selection and "selection" in map_selection:
@@ -223,47 +228,47 @@ harian_col1, harian_col2 = st.columns([1, 2.5])
 
 with harian_col1:
     st.markdown(f"""
-    <div class="ekstrem-box" style="border-left: 3px solid #2D7DD2;">
-        <span style='color:#6FA8DC; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;'>🌊 Tinggi Gelombang (Hs)</span><br>
-        <span style='font-family:"IBM Plex Mono", monospace; font-size:24px; color:#fff; font-weight:600;'>{max_wave_hs:.2f} m</span><br>
-        <span style='font-size:12px; color:#AAB8C2;'>Amplitudo: ±{amp_gelombang:.2f} m</span>
+    <div class="ekstrem-box" style="border-left: 3px solid #2DD4DA;">
+        <span style='color:#2DD4DA; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;'>🌊 Tinggi Gelombang (Hs)</span><br>
+        <span style='font-family:"IBM Plex Mono", monospace; font-size:25px; color:#F4F8FB; font-weight:600;'>{max_wave_hs:.2f} m</span><br>
+        <span style='font-size:12px; color:#9FB3C8;'>Amplitudo: ±{amp_gelombang:.2f} m</span>
     </div>
-    <div class="ekstrem-box" style="border-left: 3px solid #2D7DD2;">
-        <span style='color:#6FA8DC; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;'>🍃 Vektor Angin Permukaan</span><br>
-        <span style='font-family:"IBM Plex Mono", monospace; font-size:24px; color:#fff; font-weight:600;'>{current_wind_speed:.1f} Knot</span><br>
-        <span style='font-size:12px; color:#AAB8C2;'>Arah Datang: {current_wind_dir}°</span>
+    <div class="ekstrem-box" style="border-left: 3px solid #2DD4DA;">
+        <span style='color:#2DD4DA; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;'>🍃 Vektor Angin Permukaan</span><br>
+        <span style='font-family:"IBM Plex Mono", monospace; font-size:25px; color:#F4F8FB; font-weight:600;'>{current_wind_speed:.1f} Knot</span><br>
+        <span style='font-size:12px; color:#9FB3C8;'>Arah Datang: {current_wind_dir}°</span>
     </div>
     """, unsafe_allow_html=True)
 
     if not df_ekstrem.empty:
         for idx, row in df_ekstrem.iterrows():
-            color = "#3FA66A" if row['Tipe'] == 'Pasang' else "#D6534A"
+            color = "#34D399" if row['Tipe'] == 'Pasang' else "#FF6B5B"
             simbol = "🟢" if row['Tipe'] == 'Pasang' else "🔴"
             st.markdown(f"""
-            <div class="ekstrem-box">
+            <div class="ekstrem-box" style="border-left: 3px solid {color};">
                 <span style='color:{color}; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;'>{simbol} Puncak {row['Tipe']}</span><br>
-                <span style='font-family:"IBM Plex Mono", monospace; font-size:20px; color:#fff; font-weight:600;'>{row['Prediksi_Pasut']:.2f} m</span>
-                <span style='color:#AAB8C2; font-size:12px;'>pukul {row['Time'].strftime('%H:%M')}</span>
+                <span style='font-family:"IBM Plex Mono", monospace; font-size:21px; color:#F4F8FB; font-weight:600;'>{row['Prediksi_Pasut']:.2f} m</span>
+                <span style='color:#9FB3C8; font-size:12px;'>pukul {row['Time'].strftime('%H:%M')}</span>
             </div>
             """, unsafe_allow_html=True)
 
 with harian_col2:
     fig_harian = go.Figure()
     fig_harian.add_trace(go.Scatter(x=df_1_hari['Time'], y=df_1_hari['Prediksi_Pasut'] + amp_gelombang, mode='lines', line=dict(width=0), showlegend=False, hoverinfo='skip'))
-    fig_harian.add_trace(go.Scatter(x=df_1_hari['Time'], y=df_1_hari['Prediksi_Pasut'] - amp_gelombang, mode='lines', line=dict(width=0), fill='tonexty', fillcolor='rgba(111, 168, 220, 0.12)', name='Wave Envelope'))
-    fig_harian.add_trace(go.Scatter(x=df_1_hari['Time'], y=df_1_hari['Prediksi_Pasut'], mode='lines', name='Elevasi Pasut (m)', line=dict(color='#2D7DD2', width=3)))
+    fig_harian.add_trace(go.Scatter(x=df_1_hari['Time'], y=df_1_hari['Prediksi_Pasut'] - amp_gelombang, mode='lines', line=dict(width=0), fill='tonexty', fillcolor='rgba(45, 212, 218, 0.12)', name='Wave Envelope'))
+    fig_harian.add_trace(go.Scatter(x=df_1_hari['Time'], y=df_1_hari['Prediksi_Pasut'], mode='lines', name='Elevasi Pasut (m)', line=dict(color='#2DD4DA', width=3)))
 
     df_pasang = df_1_hari[df_1_hari['is_pasang']]
-    fig_harian.add_trace(go.Scatter(x=df_pasang['Time'], y=df_pasang['Prediksi_Pasut'], mode='markers+text', name='Pasang', marker=dict(color='#3FA66A', size=9), text=[f"{v:.2f} m" for v in df_pasang['Prediksi_Pasut']], textposition="top center", textfont=dict(color='#AAB8C2', size=10)))
+    fig_harian.add_trace(go.Scatter(x=df_pasang['Time'], y=df_pasang['Prediksi_Pasut'], mode='markers+text', name='Pasang', marker=dict(color='#34D399', size=9), text=[f"{v:.2f} m" for v in df_pasang['Prediksi_Pasut']], textposition="top center", textfont=dict(color='#9FB3C8', size=10)))
     df_surut = df_1_hari[df_1_hari['is_surut']]
-    fig_harian.add_trace(go.Scatter(x=df_surut['Time'], y=df_surut['Prediksi_Pasut'], mode='markers+text', name='Surut', marker=dict(color='#D6534A', size=9), text=[f"{v:.2f} m" for v in df_surut['Prediksi_Pasut']], textposition="bottom center", textfont=dict(color='#AAB8C2', size=10)))
+    fig_harian.add_trace(go.Scatter(x=df_surut['Time'], y=df_surut['Prediksi_Pasut'], mode='markers+text', name='Surut', marker=dict(color='#FF6B5B', size=9), text=[f"{v:.2f} m" for v in df_surut['Prediksi_Pasut']], textposition="bottom center", textfont=dict(color='#9FB3C8', size=10)))
 
     fig_harian.update_layout(
         height=350, margin=dict(l=0, r=0, t=30, b=0), plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
         font=dict(family='Inter'),
-        title=dict(text="GRAFIK ELEVASI MUKA AIR AKTUAL (PASUT + GELOMBANG)", font=dict(color="#6FA8DC", size=11, family='IBM Plex Mono')),
-        xaxis=dict(showgrid=False, tickformat="%H:%M", tickfont=dict(color="#AAB8C2")), yaxis=dict(gridcolor="#1F3B57", tickfont=dict(color="#AAB8C2")),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="#AAB8C2"))
+        title=dict(text="GRAFIK ELEVASI MUKA AIR AKTUAL (PASUT + GELOMBANG)", font=dict(color="#2DD4DA", size=11, family='IBM Plex Mono')),
+        xaxis=dict(showgrid=False, tickformat="%H:%M", tickfont=dict(color="#9FB3C8")), yaxis=dict(gridcolor="#1B3A52", tickfont=dict(color="#9FB3C8")),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="#9FB3C8"))
     )
     st.plotly_chart(fig_harian, use_container_width=True, config={'displayModeBar': False})
 
@@ -272,14 +277,14 @@ with harian_col2:
     r_col1, r_col2, r_col3 = st.columns([1, 1.5, 1])
     with r_col2:
         fig_wind = go.Figure()
-        fig_wind.add_trace(go.Scatterpolar(r=[0, current_wind_speed], theta=[0, current_wind_dir], mode='lines+markers', line=dict(color='#2D7DD2', width=4), marker=dict(size=[0, 15], symbol='triangle-up', color='#2D7DD2')))
+        fig_wind.add_trace(go.Scatterpolar(r=[0, current_wind_speed], theta=[0, current_wind_dir], mode='lines+markers', line=dict(color='#2DD4DA', width=4), marker=dict(size=[0, 15], symbol='triangle-up', color='#2DD4DA')))
         fig_wind.update_layout(
             polar=dict(
-              radialaxis=dict(showticklabels=True, gridcolor="#1F3B57", tickfont=dict(size=9, color="#AAB8C2")),
-              angularaxis=dict(thetaunit="degrees", rotation=90, direction="clockwise", gridcolor="#1F3B57", tickfont=dict(color="#fff", size=11))
+              radialaxis=dict(showticklabels=True, gridcolor="#1B3A52", tickfont=dict(size=9, color="#9FB3C8")),
+              angularaxis=dict(thetaunit="degrees", rotation=90, direction="clockwise", gridcolor="#1B3A52", tickfont=dict(color="#F4F8FB", size=11))
             ),
             paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=280, margin=dict(l=20, r=20, t=35, b=20), showlegend=False,
-            title=dict(text="Radar Arah Embusan Angin", font=dict(color="#6FA8DC", size=11, family='IBM Plex Mono'), x=0.5)
+            title=dict(text="Radar Arah Embusan Angin", font=dict(color="#2DD4DA", size=11, family='IBM Plex Mono'), x=0.5)
         )
         st.plotly_chart(fig_wind, use_container_width=True, config={'displayModeBar': False})
 
@@ -307,10 +312,10 @@ with row2_col1:
     st.subheader("📉 Simulasi Kedalaman Aktual (Pasut + Gelombang)")
     fig_depth = go.Figure()
     fig_depth.add_trace(go.Scatter(x=df_display['Time'], y=df_display['Total_Kedalaman'] + amp_gelombang, mode='lines', line=dict(width=0), showlegend=False))
-    fig_depth.add_trace(go.Scatter(x=df_display['Time'], y=df_display['Total_Kedalaman'] - amp_gelombang, mode='lines', line=dict(width=0), fill='tonexty', fillcolor='rgba(111, 168, 220, 0.12)', name='Wave Envelope'))
-    fig_depth.add_trace(go.Scatter(x=df_display['Time'], y=df_display['Total_Kedalaman'], mode='lines', name='Kedalaman Pasut', line=dict(color='#2D7DD2', width=3)))
-    fig_depth.add_hline(y=ambang_keamanan, line_dash="dash", line_color="#D6534A", annotation_text="Batas Aman Kapal", annotation_font_color="#D6534A")
-    fig_depth.update_layout(xaxis_title="Waktu", yaxis_title="Kedalaman (m)", height=450, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font=dict(color="#AAB8C2", family='Inter'), xaxis=dict(gridcolor="#1F3B57"), yaxis=dict(gridcolor="#1F3B57"), legend=dict(font=dict(color="#AAB8C2")))
+    fig_depth.add_trace(go.Scatter(x=df_display['Time'], y=df_display['Total_Kedalaman'] - amp_gelombang, mode='lines', line=dict(width=0), fill='tonexty', fillcolor='rgba(45, 212, 218, 0.12)', name='Wave Envelope'))
+    fig_depth.add_trace(go.Scatter(x=df_display['Time'], y=df_display['Total_Kedalaman'], mode='lines', name='Kedalaman Pasut', line=dict(color='#2DD4DA', width=3)))
+    fig_depth.add_hline(y=ambang_keamanan, line_dash="dash", line_color="#FF6B5B", annotation_text="Batas Aman Kapal", annotation_font_color="#FF6B5B")
+    fig_depth.update_layout(xaxis_title="Waktu", yaxis_title="Kedalaman (m)", height=450, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font=dict(color="#9FB3C8", family='Inter'), xaxis=dict(gridcolor="#1B3A52"), yaxis=dict(gridcolor="#1B3A52"), legend=dict(font=dict(color="#9FB3C8")))
     st.plotly_chart(fig_depth, use_container_width=True)
 
 # --- ROW 3: JENDELA WAKTU AMAN ---
