@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 # ==========================================
 # 1. KONFIGURASI HALAMAN & CSS KUSTOM
 # ==========================================
-st.set_page_config(page_title="NaviWatch Professional v2.0", page_icon="⚓", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="NaviWatch", page_icon="⚓", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
 <style>
