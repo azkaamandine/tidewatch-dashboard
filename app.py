@@ -15,7 +15,9 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@700;900&display=swap');
 .stApp { background-color: #0A1118; font-family: 'Inter', sans-serif; color: #FFFFFF; }
-header { visibility: hidden; }
+
+/* FIX SIDEBAR TOGGLE: Hide main menu and footer, but KEEP header visible for the toggle button */
+#MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
 .block-container { padding-top: 1rem !important; padding-bottom: 1rem !important; max-width: 100% !important; }
 
@@ -197,7 +199,7 @@ batimetri_alur = data_stasiun['alur']
 forecast_data = fetch_marine_forecast(data_stasiun['lat'], data_stasiun['lon'])
 
 if not forecast_data['success']:
-    st.error(f"⚠️ Gagal menghubungkan ke Open-Meteo API. Menggunakan data fallback statis. Error: {forecast_data['error']}")
+    st.error(f"⚠️ Gagal menghubungkan ke Open-Meteo API. Menggunakan data fallback statis. Error: {forecast_data.get('error', 'Unknown Error')}")
     # Fallback Data
     max_wave_hs, avg_wave_period = 0.62, 6.5
     current_wind_speed, current_wind_dir, current_wind_gust = 15.6, 230.0, 22.4
