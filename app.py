@@ -153,7 +153,7 @@ def convert_df_to_csv(df):
 # 4. STRUKTUR SIDEBAR KENDALI
 # ==========================================
 with st.sidebar:
-    st.markdown('<div class="sidebar-brand">⚓ NAVIWATCH PRO</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-brand">⚓ NAVIWATCH </div>', unsafe_allow_html=True)
     
     st.markdown("<h4 style='color:#00E5FF; font-size:12px; letter-spacing:1px;'>🧭 MENU INTERAKTIF</h4>", unsafe_allow_html=True)
     menu_aktif = st.radio("Pilih Lapisan Informasi:", [
